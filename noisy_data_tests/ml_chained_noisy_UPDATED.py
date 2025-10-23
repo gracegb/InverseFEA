@@ -356,36 +356,54 @@ def main():
     ensure_columns(old_df, FEATURE_COLS + TARGET_COLS, "old_df")
     ensure_columns(noisy_df, FEATURE_COLS + TARGET_COLS, "noisy_df")
 
-    # --- Run CV separately on old and noisy ---
+    # 1️⃣ Baseline: train/test on old
     old_oof, old_fold_metrics, old_mean_metrics, old_imps = run_chained_cv(
         old_df, "old", out_root / "old", scale_targets=not args.no_scale_targets
     )
-    noisy_oof, noisy_fold_metrics, noisy_mean_metrics, noisy_imps = run_chained_cv(
-        noisy_df, "noisy", out_root / "noisy", scale_targets=not args.no_scale_targets
+
+    # 2️⃣ Train/test on noisy (from clean)
+    noisy_clean_oof, noisy_clean_fold_metrics, noisy_clean_mean_metrics, noisy_clean_imps = run_chained_cv(
+        noisy_df, "noisy_from_clean", out_root / "noisy_from_clean", scale_targets=not args.no_scale_targets
     )
+
+    # 3️⃣ New: Train/test on noisy (from noisy)
+    # (If you have a separate file for this, replace `args.noisy` with the correct filename)
+    noisy_noisy_df = pd.read_csv("noisy_with_pca_from_noisy_colored.csv")
+    ensure_columns(noisy_noisy_df, FEATURE_COLS + TARGET_COLS, "noisy_noisy_df")
+
+    noisy_noisy_oof, noisy_noisy_fold_metrics, noisy_noisy_mean_metrics, noisy_noisy_imps = run_chained_cv(
+        noisy_noisy_df, "noisy_from_noisy", out_root / "noisy_from_noisy", scale_targets=not args.no_scale_targets
+    )
+
+    # 4️⃣ Train on clean, test on noisy (final goal)
+    print("\n🎯 Training on clean data, testing on noisy (final goal)...")
+    X_train, y_train = old_df[FEATURE_COLS], old_df[TARGET_COLS]
+    X_test, y_test = noisy_df[FEATURE_COLS], noisy_df[TARGET_COLS]
+
+    models, y_pred_noisy = chained_fold_train_predict(X_train, y_train, X_test)
+    final_results = pd.DataFrame({
+        "Part1_true": y_test["Part1_E"], "Part1_pred": y_pred_noisy["Part1_E"],
+        "Part3_true": y_test["Part3_E"], "Part3_pred": y_pred_noisy["Part3_E"],
+        "Part11_true": y_test["Part11_E"], "Part11_pred": y_pred_noisy["Part11_E"]
+    })
+    final_results.to_csv(out_root / "clean_train_noisy_test_predictions.csv", index=False)
 
     # --- Save summary metrics ---
     pd.DataFrame(old_mean_metrics).T.to_csv(out_root / "old_mean_metrics.csv")
-    pd.DataFrame(noisy_mean_metrics).T.to_csv(out_root / "noisy_mean_metrics.csv")
+    pd.DataFrame(noisy_clean_mean_metrics).T.to_csv(out_root / "noisy_from_clean_mean_metrics.csv")
+    pd.DataFrame(noisy_noisy_mean_metrics).T.to_csv(out_root / "noisy_from_noisy_mean_metrics.csv")
 
-    # --- Create comparison plots ---
-    comparison_plots(old_fold_metrics, noisy_fold_metrics, out_root / "comparison")
+    # --- Comparison plots ---
+    comparison_plots(old_fold_metrics, noisy_clean_fold_metrics, out_root / "comparison_old_vs_noisy_from_clean")
+    comparison_plots(noisy_clean_fold_metrics, noisy_noisy_fold_metrics, out_root / "comparison_noisy_clean_vs_noisy_noisy")
 
-    # --- Combined predictions (aligned by index if comparable) ---
-    try:
-        combined = pd.DataFrame({
-            "old_idx": old_oof.index,
-            "noisy_idx": noisy_oof.index[:len(old_oof.index)],  # defensive
-        })
-        combined.to_csv(out_root / "index_mapping_old_noisy.csv", index=False)
-    except Exception:
-        pass
-
-    # Print a brief summary to stdout
-    print("==== OLD Mean Metrics ====")
+    # --- Summary ---
+    print("\n==== OLD Mean Metrics ====")
     print(pd.DataFrame(old_mean_metrics).T.round(4))
-    print("\n==== NOISY Mean Metrics ====")
-    print(pd.DataFrame(noisy_mean_metrics).T.round(4))
+    print("\n==== NOISY (from clean) Mean Metrics ====")
+    print(pd.DataFrame(noisy_clean_mean_metrics).T.round(4))
+    print("\n==== NOISY (from noisy) Mean Metrics ====")
+    print(pd.DataFrame(noisy_noisy_mean_metrics).T.round(4))
     print(f"\nAll artifacts saved under: {out_root.resolve()}")
 
 if __name__ == "__main__":
