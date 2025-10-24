@@ -159,7 +159,7 @@ def run_chained_cv(
     - avg_importances (averaged permutation importances per model)
     """
     start_time = time.time()
-    print(f"\n🧩 Running {dataset_name.upper()} dataset ({N_SPLITS}-fold CV, scale_targets={scale_targets}) ...")
+    print(f"\nRunning {dataset_name.upper()} dataset ({N_SPLITS}-fold CV, scale_targets={scale_targets}) ...")
 
     X = df[FEATURE_COLS].copy()
     y = df[TARGET_COLS].copy()
@@ -313,7 +313,7 @@ def run_chained_cv(
         series.sort_values(ascending=False).head(20).to_csv(out_dir / f"{dataset_name}_{k}_avg_permutation_importance.csv")
 
     total = time.time() - start_time
-    print(f"✅ Finished {dataset_name.upper()} in {timedelta(seconds=int(total))}\n")
+    print(f"Finished {dataset_name.upper()} in {timedelta(seconds=int(total))}\n")
     return oof_pred, fold_metrics_df, mean_metrics, avg_importances
 
 
@@ -356,17 +356,17 @@ def main():
     ensure_columns(old_df, FEATURE_COLS + TARGET_COLS, "old_df")
     ensure_columns(noisy_df, FEATURE_COLS + TARGET_COLS, "noisy_df")
 
-    # 1️⃣ Baseline: train/test on old
+    # Baseline: train/test on old
     old_oof, old_fold_metrics, old_mean_metrics, old_imps = run_chained_cv(
         old_df, "old", out_root / "old", scale_targets=not args.no_scale_targets
     )
 
-    # 2️⃣ Train/test on noisy (from clean)
+    # Train/test on noisy (from clean)
     noisy_clean_oof, noisy_clean_fold_metrics, noisy_clean_mean_metrics, noisy_clean_imps = run_chained_cv(
         noisy_df, "noisy_from_clean", out_root / "noisy_from_clean", scale_targets=not args.no_scale_targets
     )
 
-    # 3️⃣ New: Train/test on noisy (from noisy)
+    # New: Train/test on noisy (from noisy)
     # (If you have a separate file for this, replace `args.noisy` with the correct filename)
     noisy_noisy_df = pd.read_csv("noisy_with_pca_from_noisy_colored.csv")
     ensure_columns(noisy_noisy_df, FEATURE_COLS + TARGET_COLS, "noisy_noisy_df")
@@ -375,7 +375,7 @@ def main():
         noisy_noisy_df, "noisy_from_noisy", out_root / "noisy_from_noisy", scale_targets=not args.no_scale_targets
     )
 
-    # 4️⃣ Train on clean, test on noisy (final goal)
+    # Train on clean, test on noisy (final goal)
     print("\n🎯 Training on clean data, testing on noisy (final goal)...")
     X_train, y_train = old_df[FEATURE_COLS], old_df[TARGET_COLS]
     X_test, y_test = noisy_df[FEATURE_COLS], noisy_df[TARGET_COLS]

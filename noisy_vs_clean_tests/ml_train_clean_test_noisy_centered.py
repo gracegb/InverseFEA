@@ -130,9 +130,9 @@ def main():
     out_dir = Path(args.out)
     feature_cols = FIRST_PC_FEATURES if args.first_pc_only else ALL_PC_FEATURES
 
-    print(f"\n🔹 Using {'first PCs only' if args.first_pc_only else 'all PCs'}")
-    print(f"📂 Clean data: {args.clean}")
-    print(f"📂 Noisy data: {args.noisy}")
+    print(f"\nUsing {'first PCs only' if args.first_pc_only else 'all PCs'}")
+    print(f"Clean data: {args.clean}")
+    print(f"Noisy data: {args.noisy}")
 
     clean_df = pd.read_csv(args.clean)
     noisy_df = pd.read_csv(args.noisy)
@@ -141,26 +141,26 @@ def main():
     X_test, y_test = noisy_df[feature_cols], noisy_df[TARGETS]
 
     # --- Diagnostics before correction ---
-    print("\n📊 Feature mean differences before centering:")
+    print("\nFeature mean differences before centering:")
     for col in feature_cols:
         diff = X_test[col].mean() - X_train[col].mean()
         print(f"{col:<25} Δmean = {diff:+.4f}")
 
     # --------------------------------------------------------
-    # 🧭 CENTER NOISY FEATURES TO MATCH CLEAN MEANS
+    # CENTER NOISY FEATURES TO MATCH CLEAN MEANS
     # --------------------------------------------------------
     print("\n🔧 Centering noisy feature means to match clean data...")
     X_test_centered = X_test - (X_test.mean() - X_train.mean())
 
-    print("✅ Centering complete. Checking means after correction:")
+    print("Centering complete. Checking means after correction:")
     for col in feature_cols[:5]:
         print(f"{col:<25} clean mean={X_train[col].mean():+.3f} | noisy new mean={X_test_centered[col].mean():+.3f}")
     print()
 
     # --------------------------------------------------------
-    # 🔧 FEATURE + TARGET NORMALIZATION
+    # FEATURE + TARGET NORMALIZATION
     # --------------------------------------------------------
-    print("⚙️ Normalizing features based on CLEAN dataset statistics...\n")
+    print("Normalizing features based on CLEAN dataset statistics...\n")
     feature_scaler = StandardScaler().fit(X_train)
     X_train_scaled = pd.DataFrame(feature_scaler.transform(X_train), columns=feature_cols, index=X_train.index)
     X_test_scaled = pd.DataFrame(feature_scaler.transform(X_test_centered), columns=feature_cols, index=X_test.index)
@@ -170,11 +170,11 @@ def main():
     y_test_scaled = pd.DataFrame(target_scaler.transform(y_test), columns=TARGETS, index=y_test.index)
 
     # --------------------------------------------------------
-    # 🚀 Train and Predict
+    # Train and Predict
     # --------------------------------------------------------
-    print("🚀 Training chained models (RF_3, RF_11, RF_1)...")
+    print("Training chained models (RF_3, RF_11, RF_1)...")
     models, y_pred_scaled = chained_train_predict(X_train_scaled, y_train_scaled, X_test_scaled)
-    print("✅ Training complete.\n")
+    print("Training complete.\n")
 
     y_pred = pd.DataFrame(
         target_scaler.inverse_transform(y_pred_scaled),
@@ -183,7 +183,7 @@ def main():
     )
 
     # --------------------------------------------------------
-    # 📊 Evaluate and Save
+    # Evaluate and Save
     # --------------------------------------------------------
     metrics = evaluate_results(y_test, y_pred)
     metrics_path = out_dir / ("metrics_firstPC.csv" if args.first_pc_only else "metrics_allPCs.csv")
@@ -193,10 +193,10 @@ def main():
     y_pred.to_csv(pred_path, index=False)
     metrics.to_csv(metrics_path)
 
-    print("📈 Evaluation metrics:\n", metrics.round(4))
+    print("Evaluation metrics:\n", metrics.round(4))
 
     plot_results(y_test, y_pred, out_dir, suffix="_firstPC" if args.first_pc_only else "_allPCs")
-    print(f"\n✅ Done. Results saved to: {out_dir.resolve()}")
+    print(f"\nDone. Results saved to: {out_dir.resolve()}")
 
 
 if __name__ == "__main__":
