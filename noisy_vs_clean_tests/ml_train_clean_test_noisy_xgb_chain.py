@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple chained XGBoost regressor workflow.
+"""Simple chained XGBoost regressor workflow with mean-centered features.
 
 This script mirrors the classic chaining approach (Part3_E → Part11_E → Part1_E)
 while swapping the Random Forest models for ``XGBRegressor`` models.  Clean
@@ -59,6 +59,16 @@ OUTPUT_DIR = Path("outputs_clean_train_noisy_test_xgb")
 # Helper functions
 # ---------------------------------------------------------------------------
 
+def mean_center_features(
+    X_train: pd.DataFrame, X_test: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+    """Mean center feature matrices using the training mean."""
+    feature_means = X_train.mean()
+    X_train_centered = X_train - feature_means
+    X_test_centered = X_test - feature_means
+    return X_train_centered, X_test_centered, feature_means
+
+
 def load_split_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load clean (train) and noisy (test) data."""
     train_df = pd.read_csv(CLEAN_DATA)
@@ -69,6 +79,9 @@ def load_split_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Data
 
     X_test = test_df[FEATURE_COLUMNS].copy()
     y_test = test_df[TARGET_COLUMNS].copy()
+
+    print("Applying mean-centering to feature set (using training mean)...")
+    X_train, X_test, _ = mean_center_features(X_train, X_test)
 
     return X_train, y_train, X_test, y_test
 
