@@ -219,7 +219,7 @@ def parse_args() -> BaselineConfig:
     parser.add_argument(
         "--csv",
         type=Path,
-        default=Path("datasets/noisy_with_pca_from_clean_colored.csv"),
+        default=Path("../datasets/noisy_with_pca_from_clean_colored.csv"),
         help="Path to the dataset CSV file.",
     )
     parser.add_argument(

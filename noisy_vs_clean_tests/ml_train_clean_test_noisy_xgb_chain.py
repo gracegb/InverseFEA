@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple chained XGBoost regressor workflow with mean-centered features.
+"""Simple chained XGBoost regressor workflow.
 
 This script mirrors the classic chaining approach (Part3_E → Part11_E → Part1_E)
 while swapping the Random Forest models for ``XGBRegressor`` models.  Clean
@@ -24,8 +24,8 @@ from xgboost import XGBRegressor
 
 # Default CSVs – they match the names used by the previous scripts and now
 # contain the expanded feature set.
-CLEAN_DATA = Path("../noisy_data_tests/original_with_pca_colored-2.csv")
-NOISY_DATA = Path("../noisy_data_tests/noisy_with_pca_from_clean_colored.csv")
+CLEAN_DATA = Path("../datasets/original_with_pca_colored-2.csv")
+NOISY_DATA = Path("../datasets/noisy_with_pca_from_clean_colored.csv")
 
 # Feature columns (same naming as the updated data files).
 FEATURE_COLUMNS = [
