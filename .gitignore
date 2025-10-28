@@ -1,0 +1,45 @@
+# Virtual environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Datasets and outputs
+data/
+datasets/
+*.csv
+*.tsv
+*.jsonl
+*.zip
+*.tar
+*.gz
+
+# Model artifacts
+models/
+checkpoints/
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.onnx
+*.joblib
+*.pkl
+
+# Experiment logs
+runs/
+logs/
+wandb/
+mlruns/
+
+# Notebooks auto-saves
+.ipynb_checkpoints/
+
+# System / editor files
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Cache
+*.log
+.cache/
