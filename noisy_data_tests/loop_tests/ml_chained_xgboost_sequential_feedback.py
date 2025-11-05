@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Sequential-feedback chained XGBoost prediction with feature alignment fix."""
+""" -----> Updated version with normalization"""
 
 from __future__ import annotations
 import argparse
@@ -10,6 +11,7 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
+from sklearn.preprocessing import MinMaxScaler
 
 # ---------------------------------------------------------------------
 # CONFIG
@@ -195,11 +197,16 @@ def parse_args():
 def main():
     args = parse_args()
     df = pd.read_csv(args.data)
+    
     ensure_columns(df, FEATURE_COLS + TARGET_COLS, str(args.data))
     df = df.dropna(subset=FEATURE_COLS + TARGET_COLS).reset_index(drop=True)
 
     X = df[FEATURE_COLS]
     y = df[TARGET_COLS]
+
+    # Scale features
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    X = pd.DataFrame(scaler.fit_transform(X), columns=FEATURE_COLS)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=args.test_size, random_state=args.random_state

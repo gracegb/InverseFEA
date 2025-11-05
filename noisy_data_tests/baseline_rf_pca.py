@@ -274,12 +274,23 @@ def main() -> None:
     ensure_columns(df, TARGET_COLS, "target data")
     ensure_columns(df, FEATURE_COLS, "feature data")
 
+    # === Apply Min-Max normalization to features ===
+    from sklearn.preprocessing import MinMaxScaler
+
     X = df[FEATURE_COLS]
     y = df[TARGET_COLS]
 
-    results = run_cross_validation(X, y, config)
-    final_model = train_full_model(X, y, config)
-    save_outputs(results, X, y, final_model, config)
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=FEATURE_COLS)
+
+    # Optional: also normalize target values if their magnitudes differ widely
+    # y_scaler = MinMaxScaler(feature_range=(0, 1))
+    # y_scaled = pd.DataFrame(y_scaler.fit_transform(y), columns=TARGET_COLS)
+    # Use y_scaled below instead of y if you enable this
+
+    results = run_cross_validation(X_scaled, y, config)
+    final_model = train_full_model(X_scaled, y, config)
+    save_outputs(results, X_scaled, y, final_model, config)
     print_summary(results["mean_metrics"])
 
 
