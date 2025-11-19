@@ -387,17 +387,28 @@ def run_oof_chained_cv(df: pd.DataFrame, config: Config) -> Dict[str, pd.DataFra
 
 def parse_args() -> Config:
     parser = argparse.ArgumentParser(description=__doc__)
+
+    repo_root = Path(__file__).resolve().parent.parent
+    default_csv = repo_root / "datasets/noisy_with_pca_from_clean_colored.csv"
+    default_output = repo_root / "noisy_data_tests/outputs/oof_coral_quantile_part1"
+
     parser.add_argument(
         "--csv",
         type=Path,
-        default=Path("datasets/noisy_with_pca_from_clean_colored.csv"),
-        help="Path to the training CSV.",
+        default=default_csv,
+        help=(
+            "Path to the training CSV. Relative paths are resolved against the "
+            "repository root."
+        ),
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("noisy_data_tests/outputs/oof_coral_quantile_part1"),
-        help="Directory where outputs will be written.",
+        default=default_output,
+        help=(
+            "Directory where outputs will be written. Relative paths are resolved "
+            "against the repository root."
+        ),
     )
     parser.add_argument("--splits", type=int, default=5, help="Number of CV folds.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
@@ -430,8 +441,10 @@ def parse_args() -> Config:
     args = parser.parse_args()
 
     return Config(
-        csv_path=args.csv,
-        output_dir=args.output_dir,
+        csv_path=args.csv if args.csv.is_absolute() else repo_root / args.csv,
+        output_dir=args.output_dir
+        if args.output_dir.is_absolute()
+        else repo_root / args.output_dir,
         n_splits=args.splits,
         random_state=args.seed,
         part1_quantiles=(args.part1_quantiles[0], args.part1_quantiles[1]),
@@ -443,6 +456,12 @@ def parse_args() -> Config:
 
 def main() -> None:
     config = parse_args()
+
+    if not config.csv_path.exists():
+        raise FileNotFoundError(
+            f"Input CSV not found at '{config.csv_path}'. "
+            "Run the script from the repository root or provide --csv with the correct path."
+        )
 
     df = pd.read_csv(config.csv_path, encoding="utf-8-sig")
     ensure_columns(df, BASE_FEATURE_COLS + TARGET_COLS, "input CSV")
