@@ -22,6 +22,7 @@ fold metrics, and per-target feature importances.
 from __future__ import annotations
 
 import argparse
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -221,7 +222,11 @@ def run_oof_chained_cv(df: pd.DataFrame, config: Config) -> Dict[str, pd.DataFra
     feature_importances = {"Part3_E": None, "Part11_E": None, "Part1_E": None}
     counts = {key: 0 for key in feature_importances}
 
+    start_time = time.time()
+    print(f"Starting OOF CV with {config.n_splits} folds...")
+
     for fold, (train_idx, test_idx) in enumerate(kf_outer.split(X_full), start=1):
+        fold_start = time.time()
         X_tr, X_te = X_full.iloc[train_idx].copy(), X_full.iloc[test_idx].copy()
         y_tr, y_te = y.iloc[train_idx].copy(), y.iloc[test_idx].copy()
 
@@ -361,6 +366,15 @@ def run_oof_chained_cv(df: pd.DataFrame, config: Config) -> Dict[str, pd.DataFra
                     importance if feature_importances[name] is None else feature_importances[name] + importance
                 )
                 counts[name] += 1
+
+        elapsed = time.time() - start_time
+        fold_duration = time.time() - fold_start
+        avg_per_fold = elapsed / fold
+        eta = avg_per_fold * (config.n_splits - fold)
+        print(
+            f"[Fold {fold}/{config.n_splits}] completed in {fold_duration:.1f}s | "
+            f"elapsed: {elapsed/60:.1f}m | ETA: {eta/60:.1f}m"
+        )
 
     fold_metrics = pd.DataFrame(metrics_records)
     mean_metrics = fold_metrics.groupby("target")[["rmse", "mae", "r2"]].mean().reset_index()
