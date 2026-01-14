@@ -12,6 +12,7 @@ noisy datasets. Most workflows consume the 15 PCA features:
 | --- | --- | --- |
 | `baseline_rf_pca.py` | Baseline Random Forest with shuffled K-Fold CV; direct multi-target prediction (no chaining). | `baseline_predictions.csv`, fold/mean metrics, `feature_importances.csv` in `noisy_data_tests/outputs/baseline_rf/`. |
 | `ml_chained_noisy_UPDATED.py` | Chained Random Forest pipeline with CV, normalization, and old vs noisy dataset comparison. | Per-dataset predictions, metrics, plots, and permutation importances. |
+| `ml_chained_noisy_part1_first.py` | Chained Random Forest pipeline that predicts Part1_E first, then Part3_E and Part11_E. | Per-dataset predictions, metrics, plots, and permutation importances (default output: `outputs_part1_first/`). |
 | `ml_chained_noisy_from_clean.py` | Early chained RF workflow using clean data with noisy predictions and plots. | Predictions, plots, and saved models (paths inside script). |
 | `ml_oof_coral_quantile_part1_focus.py` | Experimental OOF stacking with CORAL alignment, geometry diagnostics, and quantile modeling for Part1_E. | OOF predictions, fold metrics, and feature importances under a configurable output dir. |
 
